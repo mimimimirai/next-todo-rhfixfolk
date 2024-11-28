@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect } from 'react';
 import "./index.css"
-import "../app/api/todos"
+import "./api/todos/route"
 
 function App() {
   const [inputValue, setInputValue] = React.useState('');
