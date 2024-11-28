@@ -14,7 +14,7 @@ code {
 }
 
 html {
-  background-image: url('./Todo\　Clear.png'); /* 画像のパスを指定 */
+  background-image: url('./Todo Clear.png'); /* 画像のパスを指定 */
   background-size: 50%; /* 画像のサイズを調整 */
   background-position: center; /* 画像の位置を中央に */
   align-items: center;/* 垂直方向の中央揃え */

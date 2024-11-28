@@ -1,6 +1,7 @@
 "use client"
 import React, { useEffect } from 'react';
 import "./index.css"
+import "../app/api/todos"
 
 function App() {
   const [inputValue, setInputValue] = React.useState('');
@@ -9,9 +10,16 @@ function App() {
 
   // APIからTodoを取得する関数
   const fetchTodos = async () => {
-    const response = await fetch('/api/todos');
-    const data = await response.json();
-    setTodos(data);
+    try {
+      const response = await fetch('/api/todos');
+      if (!response.ok){
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Fetch error:', error);
+    }
   };
 
   useEffect(() => {
@@ -32,7 +40,7 @@ const response = await fetch('/api/todos', {
   headers: {
     'Content-Type': 'application/json',
   },
-  body: JSON.stringify({ text: inputValue }),
+  body: JSON.stringify( { text: inputValue }),
 });
 
 if (response.ok) {
