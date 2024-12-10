@@ -240,7 +240,11 @@ export default function TodoApp() {
     <div className="container">
       <div>
         {users.map((user) => (
-          <button key={user.id} onClick={() => handleUserChange(user)}>
+          <button
+            key={user.id}
+            onClick={() => handleUserChange(user)}
+            className={`user-button ${selectedUser?.id === user.id ? 'selected' : ''}`}
+          >
             {user.name}
           </button>
         ))}
