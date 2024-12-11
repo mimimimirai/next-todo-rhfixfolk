@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { verifyToken } from '../../../lib/auth';
+import { getSession } from 'next-auth/react';
 
 // Prismaクライアントをグローバルに保持
 let prisma;
@@ -15,16 +15,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export async function GET(request) {
-  const token = request.headers.get('Authorization')?.split(' ')[1];
-  const user = verifyToken(token);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const session = await getServerSession({ req: request });
+    
+    if (!session) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const todos = await prisma.todo.findMany({
-      where: { userId: user.id }
+      where: { userId: session.user.id }
     });
     return NextResponse.json(todos, { status: 200 });
   } catch (error) {

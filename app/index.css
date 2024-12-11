@@ -76,3 +76,49 @@ form {
   color: black;
   border-color: #fdc33c;
 }
+
+.user-section {
+  margin-bottom: 20px;
+  padding: 10px;
+  border-bottom: 2px solid #fdc33c;
+}
+
+.user-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.user-form {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.user-input {
+  padding: 5px 10px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background-color: #333;
+  color: #fdc33c;
+}
+
+.user-input::placeholder {
+  color: #666;
+}
+
+.user-add-button {
+  background-color: #333;
+  color: #fdc33c;
+  border: 2px solid #fdc33c;
+  border-radius: 4px;
+  padding: 5px 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-add-button:hover {
+  background-color: #fdc33c;
+  color: black;
+}

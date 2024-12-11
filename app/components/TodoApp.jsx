@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import "../index.css";
+import SessionCheck from './SessionCheck'
+import AdminCheck from './AdminCheck'
 
 export default function TodoApp() {
   const [inputValue, setInputValue] = useState("");
@@ -238,6 +240,8 @@ export default function TodoApp() {
 
   return (
     <div className="container">
+      <SessionCheck />
+      <AdminCheck />
       <div>
         {users.map((user) => (
           <button
