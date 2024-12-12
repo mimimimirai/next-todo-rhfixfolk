@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getSession } from 'next-auth/react';
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 // Prismaクライアントをグローバルに保持
 let prisma;
@@ -16,7 +17,7 @@ if (process.env.NODE_ENV === 'production') {
 
 export async function GET(request) {
   try {
-    const session = await getServerSession({ req: request });
+    const session = await getServerSession(authOptions);
     
     if (!session) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

@@ -1,18 +1,14 @@
-import { getProviders } from "next-auth/react"
 import { NextResponse } from "next/server"
+import { authOptions } from "../[...nextauth]/route"
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const providers = await getProviders()
-    console.log("Available providers:", providers)
+    const providers = authOptions.providers.map(provider => ({
+      id: provider.id,
+      name: provider.name,
+      type: provider.type
+    }));
     
-    if (!providers) {
-      return NextResponse.json(
-        { error: "No providers available" },
-        { status: 404 }
-      )
-    }
-
     return NextResponse.json(providers)
   } catch (error) {
     console.error("Providers error:", error)
