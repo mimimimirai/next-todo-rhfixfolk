@@ -16,36 +16,28 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log("Attempting login with:", credentials.username);
-          
           const user = await prisma.user.findUnique({
             where: { email: credentials.username }
           });
-          console.log("Found user:", user);
 
-          if (user) {
-            const isValid = await bcrypt.compare(credentials.password, user.password);
-            console.log("Password validation:", isValid);
-            
-            if (isValid) {
-              return {
-                id: user.id,
-                name: user.email,
-                email: user.email
-              };
-            }
+          if (user && await bcrypt.compare(credentials.password, user.password)) {
+            return {
+              id: user.id,
+              name: user.email,
+              email: user.email
+            };
           }
           throw new Error("Invalid username or password");
         } catch (error) {
-          console.error("Auth error:", error);
           throw error;
         }
       }
     })
   ],
+  debug: true,
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30日
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: '/auth/signin',
@@ -62,12 +54,8 @@ export const authOptions = {
         session.user.id = token.id;
       }
       return session;
-    },
-    async redirect({ url, baseUrl }) {
-      return '/'
     }
-  },
-  debug: false  // デバッグモードを無効化
+  }
 }
 
 const handler = NextAuth(authOptions)

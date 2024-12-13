@@ -6,9 +6,8 @@ import SignIn from './auth/signin/page'
 
 export default function Page() {
   const { data: session, status } = useSession()
-
-  console.log("Session status:", status);
-  console.log("Session data:", session);
+  console.log('Session status:', status);
+  console.log('Session data:', session);
 
   if (status === "loading") {
     return <div>Loading...</div>

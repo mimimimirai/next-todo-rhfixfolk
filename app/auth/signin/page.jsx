@@ -1,7 +1,7 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './signin.module.css'
 
@@ -14,26 +14,34 @@ export default function SignIn() {
   const [isRegistering, setIsRegistering] = useState(false)
   const [registrationSuccess, setRegistrationSuccess] = useState(false)
 
+  useEffect(() => {
+    console.log('Current cookies:', document.cookie)
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
     if (isLogin) {
-      console.log("Attempting login with username:", username);
-      const result = await signIn('credentials', {
-        username,
-        password,
-        redirect: false,
-        callbackUrl: '/'
-      });
-      console.log("Login result:", result);
+      try {
+        console.log('Login attempt:', { username, password });
+        const result = await signIn('credentials', {
+          username,
+          password,
+          redirect: false
+        });
+        console.log('Login result:', result);
 
-      if (result?.error) {
-        console.error("Login error:", result.error);
-        setError(result.error)
-      } else if (result?.ok) {
-        console.log("Login successful, redirecting...");
-        window.location.href = '/'
+        if (result?.error) {
+          console.error('Login error:', result.error);
+          setError(result.error);
+        } else if (result?.ok) {
+          console.log('Login successful, redirecting...');
+          window.location.replace('/');
+        }
+      } catch (error) {
+        console.error('Login exception:', error);
+        setError("ログインに失敗しました");
       }
     } else {
       setIsRegistering(true)
@@ -52,16 +60,14 @@ export default function SignIn() {
 
         setRegistrationSuccess(true)
         
-        const loginResult = await signIn('credentials', {
+        const result = await signIn('credentials', {
           username,
           password,
-          redirect: false,
-        })
+          redirect: false
+        });
 
-        if (loginResult?.ok) {
-          setTimeout(() => {
-            router.push('/')
-          }, 3000)
+        if (result?.ok) {
+          window.location.replace('/');
         }
       } catch (error) {
         setError(error.message)
