@@ -81,7 +81,7 @@ export default function SignIn() {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1>TodoApp</h1>
-        <p>{isLogin ? 'ログイン' : '新規登録'}</p>
+        <h2 className={styles.subtitle}>{isLogin ? 'ログイン' : '新規登録'}</h2>
         
         {error && <div className={styles.error}>{error}</div>}
         {registrationSuccess && (

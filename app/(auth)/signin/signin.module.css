@@ -22,6 +22,10 @@
   font-size: 1.8rem;
 }
 
+.subtitle {
+  color: #ffffff
+}
+
 .githubButton {
   background-color: #24292e;
   color: white;
