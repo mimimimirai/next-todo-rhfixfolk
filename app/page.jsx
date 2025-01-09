@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import TodoApp from './components/TodoApp'
-import SignIn from './auth/signin/page'
+import SignIn from './(auth)/signin/page'
 
 export default function Page() {
   const { data: session, status } = useSession()

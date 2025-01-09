@@ -1,0 +1,178 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: black;
+}
+
+.card {
+  background-color: #1a1a1a;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.card h1 {
+  color: #fdc33c;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+}
+
+.githubButton {
+  background-color: #24292e;
+  color: white;
+  border: none;
+  padding: 0.9rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  white-space: nowrap;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.githubButton:hover {
+  background-color: #2f363d;
+  transform: translateY(-1px);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 1.8rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input {
+  padding: 0.8rem 1.2rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+  color: white;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #fdc33c;
+}
+
+.loginButton {
+  background-color: #fdc33c;
+  color: black;
+  border: none;
+  padding: 0.9rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-weight: 600;
+  white-space: nowrap;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.loginButton:hover {
+  background-color: #ffd15c;
+  transform: translateY(-1px);
+}
+
+.divider {
+  margin: 1.8rem 0;
+  color: #666;
+  position: relative;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #333;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.error {
+  color: #ff4444;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background-color: rgba(255, 68, 68, 0.1);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.success {
+  color: #4CAF50;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.loginButton:disabled,
+.switchButton:disabled,
+.githubButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.input:disabled {
+  background-color: #2a2a2a;
+  cursor: not-allowed;
+}
+
+.switchButton {
+  background-color: transparent;
+  color: #fdc33c;
+  border: 2px solid #fdc33c;
+  padding: 0.9rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-weight: 600;
+  white-space: nowrap;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin-top: 1rem;
+}
+
+.switchButton:hover {
+  background-color: rgba(253, 195, 60, 0.1);
+  transform: translateY(-1px);
+} 
