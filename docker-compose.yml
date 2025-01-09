@@ -1,0 +1,9 @@
+# docker-compose.yml
+version: '3'
+services:
+  app:
+    build: .
+    volumes:
+      - ./your-local-folder:/app  # ローカルフォルダをコンテナにマウント
+    ports:
+      - "3000:3000"  # ポートのマッピング
