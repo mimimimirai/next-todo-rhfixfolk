@@ -1,6 +1,8 @@
 import './index.css'
+import { headers } from 'next/headers'
+import AuthProvider from './providers/AuthProvider'
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
@@ -12,7 +14,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

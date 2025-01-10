@@ -1,0 +1,42 @@
+.header {
+  background-color: #1a1a1a;
+  padding: 1rem 0;
+  border-bottom: 2px solid #fdc33c;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.userInfo {
+  color: #fdc33c;
+  font-size: 0.9rem;
+}
+
+.logoutButton {
+  background-color: transparent;
+  color: #fdc33c;
+  border: 2px solid #fdc33c;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  height: auto;
+  min-height: 36px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.logoutButton:hover {
+  background-color: #fdc33c;
+  color: #1a1a1a;
+} 

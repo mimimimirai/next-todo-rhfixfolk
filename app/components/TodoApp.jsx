@@ -1,17 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
-import "../index.css";
+import styles from "./TodoApp.module.css";
 
 export default function TodoApp({ initialTodos, userId }) {
   const [inputValue, setInputValue] = useState("");
   const [todos, setTodos] = useState(initialTodos || []);
   const [filterMode, setFilterMode] = useState("all");
-
-  const handleSignOut = async (e) => {
-    e.preventDefault();
-    await signOut({ callbackUrl: '/signin' });
-  };
 
   const fetchTodos = async () => {
     try {
@@ -124,40 +118,59 @@ export default function TodoApp({ initialTodos, userId }) {
   });
 
   return (
-    <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Todoリスト</h1>
-        <button onClick={handleSignOut} style={{ padding: '8px 16px', backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          ログアウト
-        </button>
-      </div>
-      <form onSubmit={handleAddTodo}>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => {
-            setInputValue(e.target.value);
-          }}
-        />
-        <button type="submit">追加</button>
-        <button onClick={toggleFilterMode}>
+    <div className={styles.todoContainer}>
+      <h1 className={styles.title}>Todoリスト</h1>
+      <div className={styles.form}>
+        <button type="button" onClick={toggleFilterMode} className={styles.filterButton}>
           {filterMode === "all" && "未完了のTodoのみ表示"}
           {filterMode === "incomplete" && "完了のTodoのみ表示"}
           {filterMode === "complete" && "すべてのTodoを表示"}
         </button>
-        <ul>
+        <form className={styles.inputForm} onSubmit={handleAddTodo}>
+          <div className={styles.inputWrapper}>
+            <div className={styles.inputGroup}>
+              <input
+                className={styles.input}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="新しいTodoを入力..."
+              />
+            </div>
+            <button type="submit" className={styles.button}>
+              追加
+            </button>
+          </div>
+        </form>
+        <ul className={styles.todoList}>
           {filteredTodos.map((todo) => (
-            <li key={todo.id} style={{ color: todo.done ? "#0000ff" : "#fdc33c" }}>
-              {todo.text}
-              {todo.done ? "(完了)" : ""}
-              {!todo.done && (
-                <button onClick={(e) => handleDoneTodo(e, todo.id)}>完了</button>
-              )}
-              <button onClick={(e) => handleDeleteTodo(e, todo.id)}>削除</button>
+            <li key={todo.id} className={styles.todoItem}>
+              <span className={`${styles.todoText} ${todo.done ? styles.completed : styles.pending}`}>
+                {todo.text}
+                {todo.done && " (完了)"}
+              </span>
+              <div className={styles.buttonGroup}>
+                {!todo.done && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDoneTodo(e, todo.id)}
+                    className={styles.completeButton}
+                  >
+                    完了
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteTodo(e, todo.id)}
+                  className={styles.deleteButton}
+                >
+                  削除
+                </button>
+              </div>
             </li>
           ))}
         </ul>
-      </form>
+      </div>
     </div>
   );
 } 
