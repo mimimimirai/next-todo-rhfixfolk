@@ -62,20 +62,20 @@ export default function TodoApp({ initialTodos, userId }) {
 
   const handleToggleComplete = async (id, completed) => {
     try {
-      const response = await fetch("/api/todos", {
+      const response = await fetch(`/api/todos/${id}?userId=${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id, completed, userId }),
+        body: JSON.stringify({ completed }),
       });
 
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
 
-      const updatedTodo = await response.json();
-      setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+      const data = await response.json();
+      setTodos(todos.map((todo) => (todo.id === id ? data.todo : todo)));
     } catch (error) {
       console.error("Toggle complete error:", error);
     }
