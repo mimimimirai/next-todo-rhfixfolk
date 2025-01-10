@@ -1,5 +1,4 @@
 import './index.css'
-import Providers from './components/Providers'
 
 export default function RootLayout({ children }) {
   return (
@@ -13,7 +12,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

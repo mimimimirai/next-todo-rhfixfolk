@@ -1,141 +1,84 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
 
 // Prismaクライアントをグローバルに保持
-let prisma;
+const prisma = new PrismaClient();
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
-} else {
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
-  }
-  prisma = global.prisma;
-}
-
-export async function GET(request) {
+export const GET = async (request) => {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'ユーザーIDが必要です' },
+        { status: 400 }
+      );
     }
 
     const todos = await prisma.todo.findMany({
-      where: { userId: session.user.id }
+      where: {
+        userId: userId
+      },
+      orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json(todos, { status: 200 });
+    return NextResponse.json(todos);
   } catch (error) {
-    console.error("Error in GET /api/todos:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-export async function POST(request) {
-  try {
-    const token = request.headers.get('Authorization')?.split(' ')[1];
-    console.log("Received token:", token);
-
-    if (!token) {
-      console.log("No token provided");
-      return NextResponse.json({ error: "No token provided" }, { status: 401 });
-    }
-
-    const user = verifyToken(token);
-    console.log("Decoded user:", user);
-
-    if (!user || typeof user.id !== 'number') {
-      console.log("Invalid user data:", user);
-      return NextResponse.json({ error: "Invalid user data" }, { status: 401 });
-    }
-
-    let body;
-    try {
-      body = await request.json();
-      console.log("Request body:", body);
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      return NextResponse.json({ error: "Invalid JSON in request" }, { status: 400 });
-    }
-
-    if (!body || !body.text) {
-      console.log("Invalid request body");
-      return NextResponse.json({ error: "Todoのテキストが必要です" }, { status: 400 });
-    }
-
-    try {
-      const userId = Number(user.id);
-      
-      const existingUser = await prisma.user.findUnique({
-        where: { id: userId }
-      });
-
-      if (!existingUser) {
-        await prisma.user.create({
-          data: {
-            id: userId,
-            email: `user${userId}@example.com`
-          }
-        });
-      }
-
-      const todoData = {
-        text: body.text,
-        userId: userId,
-        done: false
-      };
-      console.log("Creating todo with data:", todoData);
-
-      const todo = await prisma.todo.create({
-        data: todoData,
-        select: {
-          id: true,
-          text: true,
-          done: true,
-          userId: true
-        }
-      });
-      console.log("Todo created:", todo);
-
-      return NextResponse.json(todo, { status: 201 });
-    } catch (dbError) {
-      console.error("Database error details:", {
-        name: dbError.name,
-        message: dbError.message,
-        code: dbError.code
-      });
-      return NextResponse.json(
-        { error: "データベースエラー: " + dbError.message },
-        { status: 500 }
-      );
-    }
-  } catch (error) {
-    console.error("General error in POST /api/todos:", error);
+    console.error('Todoの取得エラー:', error);
     return NextResponse.json(
-      { error: "Internal Server Error: " + error.message },
+      { error: 'Todoの取得に失敗しました' },
       { status: 500 }
     );
   }
-}
+};
+
+export const POST = async (request) => {
+  try {
+    const body = await request.json();
+    
+    if (!body.text?.trim()) {
+      return NextResponse.json(
+        { error: 'テキストは必須です' },
+        { status: 400 }
+      );
+    }
+
+    if (!body.userId) {
+      return NextResponse.json(
+        { error: 'ユーザーIDは必須です' },
+        { status: 400 }
+      );
+    }
+
+    const todo = await prisma.todo.create({
+      data: {
+        text: body.text,
+        userId: body.userId,
+      },
+    });
+
+    return NextResponse.json(todo, { status: 201 });
+  } catch (error) {
+    console.error('Todoの作成エラー:', error);
+    return NextResponse.json(
+      { error: 'Todoの作成に失敗しました' },
+      { status: 500 }
+    );
+  }
+};
 
 export async function PUT(request) {
-  const token = request.headers.get('Authorization')?.split(' ')[1];
-  const user = verifyToken(token);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await request.json().catch(() => null);
-    if (!body || typeof body.id !== 'number' || typeof body.completed !== 'boolean') {
-      return NextResponse.json({ error: "IDと完了状態が必要です" }, { status: 400 });
+    if (!body || typeof body.id !== 'number' || typeof body.completed !== 'boolean' || !body.userId) {
+      return NextResponse.json({ error: "必要なパラメータが不足しています" }, { status: 400 });
     }
 
     const todo = await prisma.todo.update({
-      where: { id: body.id, userId: user.id },
+      where: { 
+        id: body.id,
+        userId: body.userId
+      },
       data: { done: body.completed },
     });
 
@@ -147,21 +90,19 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  const token = request.headers.get('Authorization')?.split(' ')[1];
-  const user = verifyToken(token);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
+    const userId = url.searchParams.get('userId');
+
+    if (!userId) {
+      return NextResponse.json({ error: "ユーザーIDが必要です" }, { status: 400 });
+    }
 
     await prisma.todo.delete({
       where: { 
         id: parseInt(id),
-        userId: user.id
+        userId: userId
       },
     });
 

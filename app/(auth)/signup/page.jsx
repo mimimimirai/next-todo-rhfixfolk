@@ -2,38 +2,44 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { createUser } from "../register/actions";
+import styles from "./signup.module.css";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import styles from "./signin.module.css";
 
-export default function LoginForm() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
-    const result = await signIn("credentials", {
+    // Server Action 呼び出し
+    const result = await createUser({ email, password });
+    if (!result.success) {
+      setError(result.error || "Registration failed");
+      return;
+    }
+
+    // 作成成功 => サインイン
+    const loginResult = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
-
-    if (result?.error) {
-      setError(result.error);
+    if (loginResult?.error) {
+      setError(loginResult.error);
       return;
     }
 
-    router.push("/");
-  };
+    window.location.href = "/";
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1>ログイン</h1>
+        <h1>新規登録</h1>
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <p className={styles.error}>{error}</p>}
           <input
@@ -51,10 +57,10 @@ export default function LoginForm() {
             placeholder="パスワード"
           />
           <button className={styles.loginButton} type="submit">
-            ログイン
+            新規登録
           </button>
-          <Link href="/signup" className={styles.signupLink}>
-            新規登録はこちら
+          <Link href="/signin" className={styles.signinLink}>
+            ログインはこちら
           </Link>
         </form>
       </div>

@@ -1,21 +1,31 @@
-'use client'
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import TodoApp from "./components/TodoApp";
+import { PrismaClient } from "@prisma/client";
+import { authOptions } from "@/lib/auth";
 
-import { useSession } from 'next-auth/react'
-import TodoApp from './components/TodoApp'
-import SignIn from './(auth)/signin/page'
+const prisma = new PrismaClient();
 
-export default function Page() {
-  const { data: session, status } = useSession()
-  console.log('Session status:', status);
-  console.log('Session data:', session);
-
-  if (status === "loading") {
-    return <div>Loading...</div>
-  }
-
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  
   if (!session) {
-    return <SignIn />
+    redirect("/signin");
   }
 
-  return <TodoApp />
+  // ユーザーのTodosを取得
+  const todos = await prisma.todo.findMany({
+    where: {
+      userId: session.user.id
+    },
+    orderBy: {
+      id: 'desc'
+    }
+  });
+
+  return (
+    <main>
+      <TodoApp initialTodos={todos} userId={session.user.id} />
+    </main>
+  );
 }

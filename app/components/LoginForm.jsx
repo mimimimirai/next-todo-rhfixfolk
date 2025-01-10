@@ -1,37 +1,35 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password
-      })
+    e.preventDefault();
+    setError("");
 
-      if (result.error) {
-        alert('ログインに失敗しました: ' + result.error)
-      } else if (result.ok) {
-        router.push(result.url || '/') // リダイレクト先URLがあればそこへ、なければホームへ
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-      alert('ログイン処理中にエラーが発生しました')
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError(result.error);
+      return;
     }
-  }
+
+    window.location.reload();
+
+  };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <input
         type="email"
         value={email}
@@ -46,5 +44,5 @@ export default function LoginForm() {
       />
       <button type="submit">ログイン</button>
     </form>
-  )
-} 
+  );
+}

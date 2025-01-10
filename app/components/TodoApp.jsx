@@ -1,83 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import "../index.css";
-import SessionCheck from './SessionCheck'
-import AdminCheck from './AdminCheck'
 
-export default function TodoApp() {
+export default function TodoApp({ initialTodos, userId }) {
   const [inputValue, setInputValue] = useState("");
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState(initialTodos || []);
   const [filterMode, setFilterMode] = useState("all");
-  const [token, setToken] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    setUsers([
-      { id: 1, name: "User1" },
-      { id: 2, name: "User2" },
-      { id: 3, name: "User3" },
-    ]);
-  }, []);
-
-  useEffect(() => {
-    if (users.length > 0 && !selectedUser) {
-      setSelectedUser(users[0]);
-    }
-  }, [users, selectedUser]);
-
-  useEffect(() => {
-    if (selectedUser) {
-      const getToken = async () => {
-        try {
-          const userData = {
-            user: {
-              id: Number(selectedUser.id),
-              name: selectedUser.name
-            }
-          };
-          console.log("Sending user data:", userData);
-
-          const response = await fetch("/api/auth/token", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userData),
-          });
-
-          const data = await response.json();
-          console.log("Token response:", data);
-          
-          if (!response.ok) {
-            throw new Error(data.error || 'Token generation failed');
-          }
-          
-          if (data.token) {
-            console.log("Setting token");
-            setToken(data.token);
-          } else {
-            throw new Error('No token received');
-          }
-        } catch (error) {
-          console.error("Token fetch error:", error);
-          setToken('');
-        }
-      };
-      
-      getToken();
-    } else {
-      setToken('');
-    }
-  }, [selectedUser]);
 
   const fetchTodos = async () => {
     try {
-      const response = await fetch("/api/todos", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
+      const response = await fetch(`/api/todos?userId=${userId}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -89,15 +21,6 @@ export default function TodoApp() {
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      const loadTodos = async () => {
-        await fetchTodos();
-      };
-      loadTodos();
-    }
-  }, [token]);
-
   const handleAddTodo = async (e) => {
     e.preventDefault();
 
@@ -106,66 +29,28 @@ export default function TodoApp() {
       return;
     }
 
-    if (!token) {
-      console.error("No token available");
-      alert("認証エラー: トークンがありません");
-      return;
-    }
-
     try {
-      const requestData = {
-        text: inputValue
-      };
-      console.log("Sending request:", {
-        token,
-        data: requestData
-      });
-
       const response = await fetch("/api/todos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({ 
+          text: inputValue,
+          userId: userId 
+        }),
       });
-
-      console.log("Response received:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers)
-      });
-
-      // レスポンスの内容を文字列として取得
-      const responseText = await response.text();
-      console.log("Raw response:", responseText);
-
-      // JSONとしてパースを試みる
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log("Parsed response data:", data);
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        throw new Error(`Invalid JSON response: ${responseText}`);
-      }
 
       if (!response.ok) {
-        throw new Error(data.error || `Server error: ${response.status}`);
+        throw new Error("Network response was not ok");
       }
 
-      console.log("Todo created successfully:", data);
+      const data = await response.json();
       setTodos((prevTodos) => [...prevTodos, data]);
       setInputValue("");
     } catch (error) {
-      const errorDetails = {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        toString: error.toString()
-      };
-      console.error("Error adding todo:", errorDetails);
-      alert(`Todoの追加に失敗しました: ${error.message || "不明なエラー"}`);
+      console.error("Error adding todo:", error);
+      alert("Todoの追加に失敗しました");
     }
   };
 
@@ -175,9 +60,8 @@ export default function TodoApp() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ id, completed }),
+        body: JSON.stringify({ id, completed, userId }),
       });
 
       if (!response.ok) {
@@ -199,10 +83,9 @@ export default function TodoApp() {
   const handleDeleteTodo = async (e, id) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/todos/${id}`, {
+      const response = await fetch(`/api/todos/${id}?userId=${userId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
       });
@@ -228,10 +111,6 @@ export default function TodoApp() {
     }
   };
 
-  const handleUserChange = (user) => {
-    setSelectedUser(user);
-  };
-
   const filteredTodos = todos.filter((todo) => {
     if (filterMode === "incomplete") return !todo.done;
     if (filterMode === "complete") return todo.done;
@@ -240,20 +119,6 @@ export default function TodoApp() {
 
   return (
     <div className="container">
-      <SessionCheck />
-      <AdminCheck />
-      <div>
-        {users.map((user) => (
-          <button
-            key={user.id}
-            onClick={() => handleUserChange(user)}
-            className={`user-button ${selectedUser?.id === user.id ? 'selected' : ''}`}
-          >
-            {user.name}
-          </button>
-        ))}
-      </div>
-      {selectedUser && <p>Selected User ID: {selectedUser.id}</p>}
       <h1>Todoリスト</h1>
       <form onSubmit={handleAddTodo}>
         <input
@@ -270,8 +135,8 @@ export default function TodoApp() {
           {filterMode === "complete" && "すべてのTodoを表示"}
         </button>
         <ul>
-          {filteredTodos.map((todo, index) => (
-            <li key={index} style={{ color: todo.done ? "#0000ff" : "#fdc33c" }}>
+          {filteredTodos.map((todo) => (
+            <li key={todo.id} style={{ color: todo.done ? "#0000ff" : "#fdc33c" }}>
               {todo.text}
               {todo.done ? "(完了)" : ""}
               {!todo.done && (
