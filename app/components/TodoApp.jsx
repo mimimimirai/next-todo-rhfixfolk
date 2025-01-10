@@ -1,11 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import "../index.css";
 
 export default function TodoApp({ initialTodos, userId }) {
   const [inputValue, setInputValue] = useState("");
   const [todos, setTodos] = useState(initialTodos || []);
   const [filterMode, setFilterMode] = useState("all");
+
+  const handleSignOut = async (e) => {
+    e.preventDefault();
+    await signOut({ callbackUrl: '/signin' });
+  };
 
   const fetchTodos = async () => {
     try {
@@ -119,7 +125,12 @@ export default function TodoApp({ initialTodos, userId }) {
 
   return (
     <div className="container">
-      <h1>Todoリスト</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Todoリスト</h1>
+        <button onClick={handleSignOut} style={{ padding: '8px 16px', backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          ログアウト
+        </button>
+      </div>
       <form onSubmit={handleAddTodo}>
         <input
           type="text"
