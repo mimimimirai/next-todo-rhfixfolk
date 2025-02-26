@@ -11,19 +11,41 @@ export default function TodoApp() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    console.log("Current session:", session); // セッション情報をログ出力
+    if (!session) {
+      console.log("セッションがありません");
+      setTodos([]);
+      return;
+    }
+
     if (session?.user?.id) {
-      fetchTodos();
-    } else {
-      console.log("No valid session found"); // セッションがない場合のログ
+      // IDが数値であることを確認
+      const userId = parseInt(session.user.id);
+      if (!isNaN(userId)) {
+        console.log("セッションが有効です。TODOを取得します", userId);
+        fetchTodos();
+      }
     }
   }, [session]);
 
   const fetchTodos = async () => {
     try {
-      const response = await fetch("/api/todos");
+      console.log("Fetching todos for user:", session?.user?.id);
+      
+      const response = await fetch("/api/todos", {
+        credentials: "include" // セッションCookieを含める
+      });
+      
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error:", response.status, errorData);
+        setTodos([]);
+        return;
+      }
+      
       const data = await response.json();
-      console.log("Fetched todos:", data); // デバッグ用
+      console.log("Fetched todos:", data);
       
       // データが配列であることを確認
       if (Array.isArray(data)) {
@@ -86,15 +108,19 @@ export default function TodoApp() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ done: !todo.done }),
+        credentials: "include" // セッションCookieを含める
       });
 
       if (response.ok) {
         setTodos(
           todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
         );
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to toggle todo:", response.status, errorData);
       }
     } catch (error) {
-      console.error("Failed to toggle todo:", error);
+      console.error("Exception when toggling todo:", error);
     }
   };
 
@@ -102,13 +128,17 @@ export default function TodoApp() {
     try {
       const response = await fetch(`/api/todos/${id}`, {
         method: "DELETE",
+        credentials: "include" // セッションCookieを含める
       });
 
       if (response.ok) {
         setTodos(todos.filter((t) => t.id !== id));
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to delete todo:", response.status, errorData);
       }
     } catch (error) {
-      console.error("Failed to delete todo:", error);
+      console.error("Exception when deleting todo:", error);
     }
   };
 

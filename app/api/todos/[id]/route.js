@@ -8,23 +8,39 @@ const prisma = new PrismaClient();
 // TODOの更新（完了状態の切り替え）
 export async function PATCH(request, { params }) {
   try {
-    // セッションからユーザー情報を取得
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    if (!session?.user?.id) {
+      return new Response(JSON.stringify({ error: "認証が必要です" }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // ユーザーIDを数値に変換
+    const userId = parseInt(session.user.id);
+    if (isNaN(userId)) {
+      return new Response(JSON.stringify({ error: "無効なユーザーID" }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // パスパラメータからTODO IDを取得
     const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json({ error: "無効なIDです" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "無効なTODO ID" }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
-    // リクエストボディから完了状態を取得
     const { done } = await request.json();
     if (typeof done !== 'boolean') {
-      return NextResponse.json({ error: "完了状態は必須です" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "完了状態は必須です" }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // TODOの存在確認
@@ -33,12 +49,18 @@ export async function PATCH(request, { params }) {
     });
     
     if (!todo) {
-      return NextResponse.json({ error: "指定されたTODOが見つかりません" }, { status: 404 });
+      return new Response(JSON.stringify({ error: "指定されたTODOが見つかりません" }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // 権限チェック
-    if (todo.userId !== session.user.id) {
-      return NextResponse.json({ error: "このTODOを更新する権限がありません" }, { status: 403 });
+    if (todo.userId !== userId) {
+      return new Response(JSON.stringify({ error: "このTODOを更新する権限がありません" }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // TODOの更新
@@ -47,27 +69,44 @@ export async function PATCH(request, { params }) {
       data: { done }
     });
     
-    return NextResponse.json(updatedTodo);
+    return new Response(JSON.stringify(updatedTodo), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error("TODOの更新に失敗しました:", error);
-    return NextResponse.json({ error: "TODOの更新に失敗しました" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "TODOの更新に失敗しました" }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
 // TODOの削除
 export async function DELETE(request, { params }) {
   try {
-    // セッションからユーザー情報を取得
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    if (!session?.user?.id) {
+      return new Response(JSON.stringify({ error: "認証が必要です" }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
-    // パスパラメータからTODO IDを取得
+    const userId = parseInt(session.user.id);
+    if (isNaN(userId)) {
+      return new Response(JSON.stringify({ error: "無効なユーザーID" }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
     const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json({ error: "無効なIDです" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "無効なTODO ID" }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // TODOの存在確認
@@ -76,12 +115,18 @@ export async function DELETE(request, { params }) {
     });
     
     if (!todo) {
-      return NextResponse.json({ error: "指定されたTODOが見つかりません" }, { status: 404 });
+      return new Response(JSON.stringify({ error: "指定されたTODOが見つかりません" }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // 権限チェック
-    if (todo.userId !== session.user.id) {
-      return NextResponse.json({ error: "このTODOを削除する権限がありません" }, { status: 403 });
+    if (todo.userId !== userId) {
+      return new Response(JSON.stringify({ error: "このTODOを削除する権限がありません" }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
     // TODOの削除
@@ -89,9 +134,14 @@ export async function DELETE(request, { params }) {
       where: { id }
     });
     
-    return NextResponse.json({ message: "TODOを削除しました" });
+    return new Response(JSON.stringify({ message: "TODOを削除しました" }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error("TODOの削除に失敗しました:", error);
-    return NextResponse.json({ error: "TODOの削除に失敗しました" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "TODOの削除に失敗しました" }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 } 
