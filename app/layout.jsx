@@ -1,8 +1,17 @@
-import './index.css'
-import { headers } from 'next/headers'
-import AuthProvider from './providers/AuthProvider'
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { AuthProvider } from './providers';
+import Header from './components/Header';
+import Breadcrumbs from './components/Breadcrumbs';
 
-export default async function RootLayout({ children }) {
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata = {
+  title: 'Todo App',
+  description: 'Todoアプリケーション',
+};
+
+export default function RootLayout({ children }) {
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
@@ -13,9 +22,13 @@ export default async function RootLayout({ children }) {
           content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline';"
         />
       </head>
-      <body>
+      <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <Header />
+          <div className="page-container">
+            <Breadcrumbs />
+            <main className="main-content">{children}</main>
+          </div>
         </AuthProvider>
       </body>
     </html>

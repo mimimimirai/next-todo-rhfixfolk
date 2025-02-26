@@ -2,52 +2,61 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { createUser } from "../register/actions";
-import styles from "./signup.module.css";
+import { createAccount } from "@/app/account/actions";
 import Link from "next/link";
+import styles from "../auth.module.css";
 
-export default function RegisterPage() {
+export default function SignUp() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Server Action 呼び出し
-    const result = await createUser({ email, password });
+    const result = await createAccount({ name, email, password });
     if (!result.success) {
-      setError(result.error || "Registration failed");
+      setError(result.error || "登録に失敗しました");
       return;
     }
 
-    // 作成成功 => サインイン
     const loginResult = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
+
     if (loginResult?.error) {
       setError(loginResult.error);
       return;
     }
 
     window.location.href = "/";
-  }
+  };
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1>新規登録</h1>
+        <h1 className={styles.title}>新規登録</h1>
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <p className={styles.error}>{error}</p>}
+          <input
+            className={styles.input}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="お名前"
+            required
+          />
           <input
             className={styles.input}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="メールアドレス"
+            required
           />
           <input
             className={styles.input}
@@ -55,11 +64,12 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="パスワード"
+            required
           />
-          <button className={styles.loginButton} type="submit">
-            新規登録
+          <button className={styles.button} type="submit">
+            登録
           </button>
-          <Link href="/signin" className={styles.signinLink}>
+          <Link href="/signin" className={styles.link}>
             ログインはこちら
           </Link>
         </form>

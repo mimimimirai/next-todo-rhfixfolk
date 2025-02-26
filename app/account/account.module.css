@@ -1,0 +1,99 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: white;
+}
+
+.card {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 2px solid #4CAF50;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  color: #4CAF50;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  color: #4CAF50;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.input {
+  padding: 0.8rem 1.2rem;
+  border: 2px solid #4CAF50;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 1rem;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #2E7D32;
+}
+
+.error {
+  color: #ff4444;
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background-color: rgba(255, 68, 68, 0.1);
+  border-radius: 6px;
+}
+
+.success {
+  color: #4CAF50;
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 6px;
+} 

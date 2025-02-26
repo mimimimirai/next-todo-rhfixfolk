@@ -1,176 +1,221 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./TodoApp.module.css";
+import { useSession } from "next-auth/react";
+import { FaTrash, FaPlus, FaCheck, FaRegSquare } from "react-icons/fa";
 
-export default function TodoApp({ initialTodos, userId }) {
-  const [inputValue, setInputValue] = useState("");
-  const [todos, setTodos] = useState(initialTodos || []);
-  const [filterMode, setFilterMode] = useState("all");
+export default function TodoApp() {
+  const [todos, setTodos] = useState([]);
+  const [text, setText] = useState("");
+  const [filter, setFilter] = useState("all");
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    console.log("Current session:", session); // セッション情報をログ出力
+    if (session?.user?.id) {
+      fetchTodos();
+    } else {
+      console.log("No valid session found"); // セッションがない場合のログ
+    }
+  }, [session]);
 
   const fetchTodos = async () => {
     try {
-      const response = await fetch(`/api/todos?userId=${userId}`);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      const response = await fetch("/api/todos");
       const data = await response.json();
-      setTodos(data);
-      return data;
+      console.log("Fetched todos:", data); // デバッグ用
+      
+      // データが配列であることを確認
+      if (Array.isArray(data)) {
+        setTodos(data);
+      } else if (data && Array.isArray(data.todos)) {
+        // APIが { todos: [...] } の形式で返す場合
+        setTodos(data.todos);
+      } else {
+        console.error("API did not return an array:", data);
+        setTodos([]); // 空の配列をセット
+      }
     } catch (error) {
-      console.error("Fetch error:", error);
+      console.error("Failed to fetch todos:", error);
+      setTodos([]); // エラー時は空の配列をセット
     }
   };
 
-  const handleAddTodo = async (e) => {
+  const addTodo = async (e) => {
     e.preventDefault();
-
-    if (inputValue.length < 1) {
-      alert("Todoを入力してください");
-      return;
-    }
+    if (!text.trim()) return;
 
     try {
+      console.log("Adding todo:", text); // デバッグ用
+
       const response = await fetch("/api/todos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          text: inputValue,
-          userId: userId 
-        }),
+        body: JSON.stringify({ text }),
+        credentials: "include" // セッションCookieを含める
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      console.log("Response status:", response.status); // デバッグ用
 
-      const data = await response.json();
-      setTodos((prevTodos) => [...prevTodos, data]);
-      setInputValue("");
+      if (response.ok) {
+        const newTodo = await response.json();
+        console.log("New todo created:", newTodo);
+        setTodos(prevTodos => [newTodo, ...prevTodos]); // 新しいTODOを先頭に追加
+        setText("");
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to add todo:", errorData);
+        alert(`TODOの追加に失敗しました: ${errorData.error || '不明なエラー'}`);
+      }
     } catch (error) {
-      console.error("Error adding todo:", error);
-      alert("Todoの追加に失敗しました");
+      console.error("Exception when adding todo:", error);
+      alert("TODOの追加中にエラーが発生しました");
     }
   };
 
-  const handleToggleComplete = async (id, completed) => {
+  const toggleTodo = async (id) => {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
     try {
-      const response = await fetch(`/api/todos/${id}?userId=${userId}`, {
-        method: "PUT",
+      const response = await fetch(`/api/todos/${id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ completed }),
+        body: JSON.stringify({ done: !todo.done }),
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      if (response.ok) {
+        setTodos(
+          todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+        );
       }
-
-      const data = await response.json();
-      setTodos(todos.map((todo) => (todo.id === id ? data.todo : todo)));
     } catch (error) {
-      console.error("Toggle complete error:", error);
+      console.error("Failed to toggle todo:", error);
     }
   };
 
-  const handleDoneTodo = (e, id) => {
-    e.preventDefault();
-    handleToggleComplete(id, !todos.find(todo => todo.id === id).done);
-  };
-
-  const handleDeleteTodo = async (e, id) => {
-    e.preventDefault();
+  const deleteTodo = async (id) => {
     try {
-      const response = await fetch(`/api/todos/${id}?userId=${userId}`, {
+      const response = await fetch(`/api/todos/${id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json"
-        },
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      if (response.ok) {
+        setTodos(todos.filter((t) => t.id !== id));
       }
-
-      setTodos(todos.filter((todo) => todo.id !== id));
     } catch (error) {
-      console.error("Delete todo error:", error);
+      console.error("Failed to delete todo:", error);
     }
   };
 
-  const toggleFilterMode = (e) => {
-    e.preventDefault();
-    if (filterMode === "all") {
-      setFilterMode("incomplete");
-    } else if (filterMode === "incomplete") {
-      setFilterMode("complete");
-    } else {
-      setFilterMode("all");
-    }
-  };
-
-  const filteredTodos = todos.filter((todo) => {
-    if (filterMode === "incomplete") return !todo.done;
-    if (filterMode === "complete") return todo.done;
-    return true;
-  });
+  const filteredTodos = Array.isArray(todos) 
+    ? todos.filter(todo => {
+        if (filter === 'all') return true;
+        if (filter === 'active') return !todo.done;
+        if (filter === 'completed') return todo.done;
+        return true;
+      })
+    : [];
 
   return (
-    <div className={styles.todoContainer}>
-      <h1 className={styles.title}>Todoリスト</h1>
-      <div className={styles.form}>
-        <button type="button" onClick={toggleFilterMode} className={styles.filterButton}>
-          {filterMode === "all" && "未完了のTodoのみ表示"}
-          {filterMode === "incomplete" && "完了のTodoのみ表示"}
-          {filterMode === "complete" && "すべてのTodoを表示"}
+    <div className={styles.container}>
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          addTodo(e);
+        }} 
+        className={styles.form}
+      >
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="新しいタスクを入力..."
+          className={styles.input}
+        />
+        <button 
+          type="submit" 
+          className={styles.addButton}
+          onClick={(e) => {
+            // ボタンクリック時にもフォーム送信を確実に実行
+            if (!e.isDefaultPrevented()) {
+              e.preventDefault();
+              addTodo(e);
+            }
+          }}
+        >
+          <FaPlus style={{ color: 'white', fontSize: '1.5rem' }} />
         </button>
-        <form className={styles.inputForm} onSubmit={handleAddTodo}>
-          <div className={styles.inputWrapper}>
-            <div className={styles.inputGroup}>
-              <input
-                className={styles.input}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="新しいTodoを入力..."
-              />
-            </div>
-            <button type="submit" className={styles.button}>
-              追加
-            </button>
-          </div>
-        </form>
-        <ul className={styles.todoList}>
-          {filteredTodos.map((todo) => (
-            <li key={todo.id} className={styles.todoItem}>
-              <span className={`${styles.todoText} ${todo.done ? styles.completed : styles.pending}`}>
-                {todo.text}
-                {todo.done && " (完了)"}
-              </span>
-              <div className={styles.buttonGroup}>
-                {!todo.done && (
-                  <button
-                    type="button"
-                    onClick={(e) => handleDoneTodo(e, todo.id)}
-                    className={styles.completeButton}
-                  >
-                    完了
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteTodo(e, todo.id)}
-                  className={styles.deleteButton}
-                >
-                  削除
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      </form>
+      
+      <div className={styles.filterContainer}>
+        <button 
+          className={`${styles.filterButton} ${filter === 'all' ? styles.active : ''}`}
+          onClick={() => setFilter('all')}
+          aria-label="すべてのタスクを表示"
+          title="すべてのタスクを表示"
+        >
+          すべて
+        </button>
+        <button 
+          className={`${styles.filterButton} ${filter === 'active' ? styles.active : ''}`}
+          onClick={() => setFilter('active')}
+          aria-label="未完了のタスクのみ表示"
+          title="未完了のタスクのみ表示"
+        >
+          未完了
+        </button>
+        <button 
+          className={`${styles.filterButton} ${filter === 'completed' ? styles.active : ''}`}
+          onClick={() => setFilter('completed')}
+          aria-label="完了済みのタスクのみ表示"
+          title="完了済みのタスクのみ表示"
+        >
+          完了済み
+        </button>
       </div>
+
+      <ul className={styles.todoList}>
+        {filteredTodos.map((todo) => (
+          <li key={todo.id} className={styles.todoItem}>
+            <div 
+              className={styles.todoContent}
+              onClick={() => toggleTodo(todo.id)}
+            >
+              <button
+                className={styles.checkboxButton}
+                aria-label={todo.done ? "未完了に戻す" : "完了にする"}
+                title={todo.done ? "未完了に戻す" : "完了にする"}
+              >
+                {todo.done ? (
+                  <FaCheck style={{ color: '#4CAF50' }} />
+                ) : (
+                  <FaRegSquare style={{ color: '#4CAF50' }} />
+                )}
+              </button>
+              <span
+                className={`${styles.todoText} ${
+                  todo.done ? styles.completed : ""
+                }`}
+              >
+                {todo.text}
+              </span>
+            </div>
+            <button
+              onClick={() => deleteTodo(todo.id)}
+              className={styles.deleteButton}
+              aria-label="削除"
+              title="削除"
+            >
+              <FaTrash style={{ color: 'white' }} />
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 } 

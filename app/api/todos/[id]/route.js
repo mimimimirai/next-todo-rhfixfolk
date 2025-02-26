@@ -1,121 +1,97 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/route";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PUT(request, { params }) {
+// TODOの更新（完了状態の切り替え）
+export async function PATCH(request, { params }) {
   try {
-    const resolvedParams = await params;
-    const { searchParams } = new URL(request.url);
-    const userId = parseInt(searchParams.get('userId'));
-
-    if (!userId || isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'ユーザーIDが必要です' },
-        { status: 400 }
-      );
+    // セッションからユーザー情報を取得
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
-
-    const id = parseInt(resolvedParams.id);
+    
+    // パスパラメータからTODO IDを取得
+    const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'IDが無効です' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "無効なIDです" }, { status: 400 });
     }
-
-    const body = await request.json().catch(() => null);
-    if (!body || typeof body.completed !== 'boolean') {
-      return NextResponse.json(
-        { error: '完了状態は必須です' },
-        { status: 400 }
-      );
+    
+    // リクエストボディから完了状態を取得
+    const { done } = await request.json();
+    if (typeof done !== 'boolean') {
+      return NextResponse.json({ error: "完了状態は必須です" }, { status: 400 });
     }
-
+    
+    // TODOの存在確認
     const todo = await prisma.todo.findUnique({
-      where: { id: id }
+      where: { id }
     });
-
+    
     if (!todo) {
-      return NextResponse.json(
-        { error: '指定されたTodoが見つかりません' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "指定されたTODOが見つかりません" }, { status: 404 });
     }
-
-    if (todo.userId !== userId) {
-      console.log('権限チェック失敗:', { todoUserId: todo.userId, requestUserId: userId });
-      return NextResponse.json(
-        { error: 'このTodoを更新する権限がありません' },
-        { status: 403 }
-      );
+    
+    // 権限チェック
+    if (todo.userId !== session.user.id) {
+      return NextResponse.json({ error: "このTODOを更新する権限がありません" }, { status: 403 });
     }
-
+    
+    // TODOの更新
     const updatedTodo = await prisma.todo.update({
-      where: { id: id },
-      data: { done: body.completed },
+      where: { id },
+      data: { done }
     });
-
-    return NextResponse.json({ message: "Todoを更新しました", todo: updatedTodo }, { status: 200 });
+    
+    return NextResponse.json(updatedTodo);
   } catch (error) {
-    console.error('Todoの更新エラー:', error);
-    return NextResponse.json(
-      { error: 'Todoの更新に失敗しました' },
-      { status: 500 }
-    );
+    console.error("TODOの更新に失敗しました:", error);
+    return NextResponse.json({ error: "TODOの更新に失敗しました" }, { status: 500 });
   }
 }
 
+// TODOの削除
 export async function DELETE(request, { params }) {
   try {
-    const resolvedParams = await params;
-    const { searchParams } = new URL(request.url);
-    const userId = parseInt(searchParams.get('userId'));
-
-    if (!userId || isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'ユーザーIDが必要です' },
-        { status: 400 }
-      );
+    // セッションからユーザー情報を取得
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
-
-    const id = parseInt(resolvedParams.id);
+    
+    // パスパラメータからTODO IDを取得
+    const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'IDが無効です' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "無効なIDです" }, { status: 400 });
     }
-
+    
+    // TODOの存在確認
     const todo = await prisma.todo.findUnique({
-      where: { id: id }
+      where: { id }
     });
-
+    
     if (!todo) {
-      return NextResponse.json(
-        { error: '指定されたTodoが見つかりません' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "指定されたTODOが見つかりません" }, { status: 404 });
     }
-
-    if (todo.userId !== userId) {
-      console.log('権限チェック失敗:', { todoUserId: todo.userId, requestUserId: userId });
-      return NextResponse.json(
-        { error: 'このTodoを削除する権限がありません' },
-        { status: 403 }
-      );
+    
+    // 権限チェック
+    if (todo.userId !== session.user.id) {
+      return NextResponse.json({ error: "このTODOを削除する権限がありません" }, { status: 403 });
     }
-
+    
+    // TODOの削除
     await prisma.todo.delete({
-      where: { id: id }
+      where: { id }
     });
-
-    return NextResponse.json({ message: "Todoを削除しました" }, { status: 200 });
+    
+    return NextResponse.json({ message: "TODOを削除しました" });
   } catch (error) {
-    console.error('Todoの削除エラー:', error);
-    return NextResponse.json(
-      { error: 'Todoの削除に失敗しました' },
-      { status: 500 }
-    );
+    console.error("TODOの削除に失敗しました:", error);
+    return NextResponse.json({ error: "TODOの削除に失敗しました" }, { status: 500 });
   }
 } 

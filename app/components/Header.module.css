@@ -1,42 +1,97 @@
 .header {
-  background-color: #1a1a1a;
+  background-color: #4CAF50;
   padding: 1rem 0;
   border-bottom: 2px solid #fdc33c;
 }
 
 .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+.leftSection {
   display: flex;
-  justify-content: space-between;
+  gap: 1rem;
   align-items: center;
 }
 
 .userInfo {
-  color: #fdc33c;
+  color: white;
   font-size: 0.9rem;
 }
 
-.logoutButton {
-  background-color: transparent;
-  color: #fdc33c;
-  border: 2px solid #fdc33c;
+.accountButton, .todoButton {
+  background-color: white;
+  color: #4CAF50;
+  border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
-  height: auto;
-  min-height: 36px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.accountButton:hover, .todoButton:hover {
+  background-color: #f0f0f0;
+}
+
+.logoutButton {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
 }
 
 .logoutButton:hover {
-  background-color: #fdc33c;
-  color: #1a1a1a;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.loginButton {
+  background-color: white;
+  color: #4CAF50;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.loginButton:hover {
+  background-color: #f0f0f0;
+}
+
+.menuButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  padding: 0.5rem;
+}
+
+.menuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 } 

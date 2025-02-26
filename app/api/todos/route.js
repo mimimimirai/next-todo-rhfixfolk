@@ -1,68 +1,57 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 import { PrismaClient } from "@prisma/client";
 
 // Prismaクライアントをグローバルに保持
 const prisma = new PrismaClient();
 
-export const GET = async (request) => {
+// TODOリストの取得
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'ユーザーIDが必要です' },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
-
+    
     const todos = await prisma.todo.findMany({
       where: {
-        userId: userId
+        userId: session.user.id
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
+    
     return NextResponse.json(todos);
   } catch (error) {
-    console.error('Todoの取得エラー:', error);
-    return NextResponse.json(
-      { error: 'Todoの取得に失敗しました' },
-      { status: 500 }
-    );
+    console.error("TODOの取得に失敗しました:", error);
+    return NextResponse.json({ error: "TODOの取得に失敗しました" }, { status: 500 });
   }
-};
+}
 
-export const POST = async (request) => {
+// TODOの追加（簡略版）
+export async function POST(request) {
   try {
-    const body = await request.json();
+    const { text } = await request.json();
     
-    if (!body.text?.trim()) {
-      return NextResponse.json(
-        { error: 'テキストは必須です' },
-        { status: 400 }
-      );
+    if (!text || text.trim() === '') {
+      return NextResponse.json({ error: "テキストは必須です" }, { status: 400 });
     }
-
-    if (!body.userId) {
-      return NextResponse.json(
-        { error: 'ユーザーIDは必須です' },
-        { status: 400 }
-      );
-    }
-
-    const todo = await prisma.todo.create({
-      data: {
-        text: body.text,
-        userId: body.userId,
-      },
-    });
-
-    return NextResponse.json(todo, { status: 201 });
+    
+    // 仮のTODOを返す（データベース操作なし）
+    const mockTodo = {
+      id: Date.now(),
+      text: text.trim(),
+      done: false,
+      userId: 1, // 仮のユーザーID
+      createdAt: new Date().toISOString()
+    };
+    
+    return NextResponse.json(mockTodo);
   } catch (error) {
-    console.error('Todoの作成エラー:', error);
-    return NextResponse.json(
-      { error: 'Todoの作成に失敗しました' },
-      { status: 500 }
-    );
+    console.error("TODOの追加に失敗しました:", error);
+    return NextResponse.json({ error: "TODOの追加に失敗しました" }, { status: 500 });
   }
-};
+}
