@@ -32,7 +32,7 @@ export async function GET() {
 
     const todos = await prisma.todo.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { id: 'desc' }
     });
 
     return new Response(JSON.stringify(todos), {
@@ -52,46 +52,54 @@ export async function GET() {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // ユーザーIDの型を確認するためのログを追加
+    console.log("セッションから取得したユーザーID:", session.user.id, "型:", typeof session.user.id);
     
-    const userId = parseInt(session.user.id);
-    if (isNaN(userId)) {
-      return new Response(JSON.stringify({ error: "無効なユーザーID" }), {
-        status: 400,
+    // 型変換を行わずにそのまま使用してみる
+    const userId = session.user.id;
+    
+    // ユーザーの存在確認を追加
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      console.log("ユーザーが見つかりません。ID:", userId);
+      return new Response(JSON.stringify({ error: "ユーザーが見つかりません" }), {
+        status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
+    console.log("ユーザーが見つかりました:", user);
+
     const { text } = await request.json();
     
-    if (!text || typeof text !== 'string' || text.trim() === '') {
-      return new Response(JSON.stringify({ error: "テキストは必須です" }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+    // 作成するTODOのデータをログに出力
+    console.log("作成するTODOデータ:", { text, userId });
     
-    const newTodo = await prisma.todo.create({
+    const todo = await prisma.todo.create({
       data: {
-        text: text.trim(),
-        done: false,
+        text,
         userId
       }
     });
-    
-    return new Response(JSON.stringify(newTodo), {
-      status: 201,
+
+    return new Response(JSON.stringify(todo), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("TODOの追加に失敗しました:", error);
-    return new Response(JSON.stringify({ error: "TODOの追加に失敗しました" }), {
+    // エラーの詳細情報を出力
+    console.error("Todo作成エラー:", error.message);
+    console.error("エラースタック:", error.stack);
+    return new Response(JSON.stringify({ error: "Todoの作成に失敗しました", details: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
