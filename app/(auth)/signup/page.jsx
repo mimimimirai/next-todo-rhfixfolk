@@ -1,78 +1,77 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { createAccount } from "@/app/account/actions";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "../../providers";
 import styles from "../auth.module.css";
 
 export default function SignUp() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const { signUp } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
+    setError(null);
+    setMessage("");
 
-    const result = await createAccount({ name, email, password });
-    if (!result.success) {
-      setError(result.error || "登録に失敗しました");
-      return;
+    try {
+      const { error } = await signUp(email, password);
+      if (error) throw error;
+      setMessage("登録確認メールを送信しました。メールをご確認ください。");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-
-    const loginResult = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (loginResult?.error) {
-      setError(loginResult.error);
-      return;
-    }
-
-    window.location.href = "/";
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>新規登録</h1>
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {error && <p className={styles.error}>{error}</p>}
-          <input
-            className={styles.input}
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="お名前"
-            required
-          />
-          <input
-            className={styles.input}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="メールアドレス"
-            required
-          />
-          <input
-            className={styles.input}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="パスワード"
-            required
-          />
-          <button className={styles.button} type="submit">
-            登録
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h1 className={styles.authTitle}>新規登録</h1>
+        {error && <p className={styles.errorMessage}>{error}</p>}
+        {message && <p className={styles.successMessage}>{message}</p>}
+        <form onSubmit={handleSubmit} className={styles.authForm}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>メールアドレス</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.input}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>パスワード</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.input}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className={styles.authButton}
+            disabled={loading}
+          >
+            {loading ? "登録中..." : "登録する"}
           </button>
-          <Link href="/signin" className={styles.link}>
-            ログインはこちら
-          </Link>
         </form>
+        <p className={styles.authLink}>
+          すでにアカウントをお持ちの方は<Link href="/signin">ログイン</Link>
+        </p>
       </div>
     </div>
   );

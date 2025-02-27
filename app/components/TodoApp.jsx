@@ -1,183 +1,120 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '../providers';
+import { supabase } from '../../lib/supabase';
 import styles from "./TodoApp.module.css";
-import { useSession } from "next-auth/react";
 import { FaTrash, FaPlus, FaCheck, FaRegSquare } from "react-icons/fa";
 
 export default function TodoApp() {
   const [todos, setTodos] = useState([]);
-  const [text, setText] = useState("");
+  const [newTodo, setNewTodo] = useState("");
   const [filter, setFilter] = useState("all");
-  const { data: session } = useSession();
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!session) {
-      console.log("セッションがありません");
-      setTodos([]);
-      return;
+    if (user) {
+      fetchTodos();
     }
-
-    if (session?.user?.id) {
-      // IDが数値であることを確認
-      const userId = parseInt(session.user.id);
-      if (!isNaN(userId)) {
-        console.log("セッションが有効です。TODOを取得します", userId);
-        fetchTodos();
-      }
-    }
-  }, [session]);
+  }, [user]);
 
   const fetchTodos = async () => {
     try {
-      console.log("Fetching todos for user:", session?.user?.id);
-      
-      const response = await fetch("/api/todos", {
-        credentials: "include" // セッションCookieを含める
-      });
-      
-      console.log("Response status:", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error:", response.status, errorData);
-        setTodos([]);
-        return;
-      }
-      
-      const data = await response.json();
-      console.log("Fetched todos:", data);
-      
-      // データが配列であることを確認
-      if (Array.isArray(data)) {
-        setTodos(data);
-      } else if (data && Array.isArray(data.todos)) {
-        // APIが { todos: [...] } の形式で返す場合
-        setTodos(data.todos);
-      } else {
-        console.error("API did not return an array:", data);
-        setTodos([]); // 空の配列をセット
-      }
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTodos(data || []);
     } catch (error) {
-      console.error("Failed to fetch todos:", error);
-      setTodos([]); // エラー時は空の配列をセット
+      console.error('Error fetching todos:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const addTodo = async (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!newTodo.trim()) return;
 
     try {
-      console.log("Adding todo:", text); // デバッグ用
+      const { data, error } = await supabase
+        .from('todos')
+        .insert([
+          { title: newTodo, user_id: user.id, completed: false }
+        ])
+        .select();
 
-      const response = await fetch("/api/todos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
-        credentials: "include" // セッションCookieを含める
-      });
-
-      console.log("Response status:", response.status); // デバッグ用
-
-      if (response.ok) {
-        const newTodo = await response.json();
-        console.log("New todo created:", newTodo);
-        setTodos(prevTodos => [newTodo, ...prevTodos]); // 新しいTODOを先頭に追加
-        setText("");
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to add todo:", errorData);
-        alert(`TODOの追加に失敗しました: ${errorData.error || '不明なエラー'}`);
-      }
+      if (error) throw error;
+      setTodos([...data, ...todos]);
+      setNewTodo('');
     } catch (error) {
-      console.error("Exception when adding todo:", error);
-      alert("TODOの追加中にエラーが発生しました");
+      console.error('Error adding todo:', error);
     }
   };
 
-  const toggleTodo = async (id) => {
-    const todo = todos.find((t) => t.id === id);
-    if (!todo) return;
-
+  const toggleTodo = async (id, completed) => {
     try {
-      const response = await fetch(`/api/todos/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ done: !todo.done }),
-        credentials: "include" // セッションCookieを含める
-      });
+      const { error } = await supabase
+        .from('todos')
+        .update({ completed: !completed })
+        .eq('id', id);
 
-      if (response.ok) {
-        setTodos(
-          todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-        );
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Failed to toggle todo:", response.status, errorData);
-      }
+      if (error) throw error;
+      setTodos(
+        todos.map((todo) =>
+          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        )
+      );
     } catch (error) {
-      console.error("Exception when toggling todo:", error);
+      console.error('Error updating todo:', error);
     }
   };
 
   const deleteTodo = async (id) => {
     try {
-      const response = await fetch(`/api/todos/${id}`, {
-        method: "DELETE",
-        credentials: "include" // セッションCookieを含める
-      });
+      const { error } = await supabase
+        .from('todos')
+        .delete()
+        .eq('id', id);
 
-      if (response.ok) {
-        setTodos(todos.filter((t) => t.id !== id));
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Failed to delete todo:", response.status, errorData);
-      }
+      if (error) throw error;
+      setTodos(todos.filter((todo) => todo.id !== id));
     } catch (error) {
-      console.error("Exception when deleting todo:", error);
+      console.error('Error deleting todo:', error);
     }
   };
 
-  const filteredTodos = Array.isArray(todos) 
-    ? todos.filter(todo => {
-        if (filter === 'all') return true;
-        if (filter === 'active') return !todo.done;
-        if (filter === 'completed') return todo.done;
-        return true;
-      })
-    : [];
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === 'active') return !todo.completed;
+    if (filter === 'completed') return todo.completed;
+    return true;
+  });
+
+  if (!user) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>ログインしてください</h1>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          addTodo(e);
-        }} 
-        className={styles.form}
-      >
+      <h1 className={styles.title}>Todoリスト</h1>
+
+      <form onSubmit={addTodo} className={styles.form}>
         <input
           type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={newTodo}
+          onChange={(e) => setNewTodo(e.target.value)}
           placeholder="新しいタスクを入力..."
           className={styles.input}
         />
-        <button 
-          type="submit" 
-          className={styles.addButton}
-          onClick={(e) => {
-            // ボタンクリック時にもフォーム送信を確実に実行
-            if (!e.isDefaultPrevented()) {
-              e.preventDefault();
-              addTodo(e);
-            }
-          }}
-        >
+        <button type="submit" className={styles.addButton}>
           <FaPlus style={{ color: 'white', fontSize: '1.5rem' }} />
         </button>
       </form>
@@ -209,43 +146,47 @@ export default function TodoApp() {
         </button>
       </div>
 
-      <ul className={styles.todoList}>
-        {filteredTodos.map((todo) => (
-          <li key={todo.id} className={styles.todoItem}>
-            <div 
-              className={styles.todoContent}
-              onClick={() => toggleTodo(todo.id)}
-            >
-              <button
-                className={styles.checkboxButton}
-                aria-label={todo.done ? "未完了に戻す" : "完了にする"}
-                title={todo.done ? "未完了に戻す" : "完了にする"}
-              >
-                {todo.done ? (
-                  <FaCheck style={{ color: '#4CAF50' }} />
-                ) : (
-                  <FaRegSquare style={{ color: '#4CAF50' }} />
-                )}
-              </button>
-              <span
-                className={`${styles.todoText} ${
-                  todo.done ? styles.completed : ""
-                }`}
-              >
-                {todo.text}
-              </span>
-            </div>
-            <button
-              onClick={() => deleteTodo(todo.id)}
-              className={styles.deleteButton}
-              aria-label="削除"
-              title="削除"
-            >
-              <FaTrash style={{ color: 'white' }} />
-            </button>
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <p>読み込み中...</p>
+      ) : (
+        <ul className={styles.todoList}>
+          {filteredTodos.length === 0 ? (
+            <p>タスクがありません</p>
+          ) : (
+            filteredTodos.map((todo) => (
+              <li key={todo.id} className={styles.todoItem}>
+                <div 
+                  className={styles.todoContent}
+                  onClick={() => toggleTodo(todo.id, todo.completed)}
+                >
+                  <span className={styles.checkboxButton}>
+                    {todo.completed ? (
+                      <FaCheck style={{ color: '#4CAF50' }} />
+                    ) : (
+                      <FaRegSquare style={{ color: '#4CAF50' }} />
+                    )}
+                  </span>
+                  <span
+                    className={`${styles.todoText} ${
+                      todo.completed ? styles.completed : ""
+                    }`}
+                  >
+                    {todo.title}
+                  </span>
+                </div>
+                <button
+                  onClick={() => deleteTodo(todo.id)}
+                  className={styles.deleteButton}
+                  aria-label="削除"
+                  title="削除"
+                >
+                  <FaTrash style={{ color: 'white' }} />
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
     </div>
   );
 } 
