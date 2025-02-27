@@ -1,33 +1,27 @@
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from './providers';
+import CalendarSidebar from './components/CalendarSidebar';
 import Header from './components/Header';
-import Breadcrumbs from './components/Breadcrumbs';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'Todo App',
-  description: 'Todoアプリケーション',
+  description: 'Todoアプリ',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ja" suppressHydrationWarning>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta 
-          httpEquiv="Content-Security-Policy" 
-          content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline';"
-        />
-      </head>
+    <html lang="ja">
       <body className={inter.className}>
         <AuthProvider>
           <Header />
-          <div className="page-container">
-            <Breadcrumbs />
-            <main className="main-content">{children}</main>
+          <div className="flex relative pt-28">
+            <main className="flex-1 p-4 has-calendar-sidebar">
+              {children}
+            </main>
+            <CalendarSidebar />
           </div>
         </AuthProvider>
       </body>

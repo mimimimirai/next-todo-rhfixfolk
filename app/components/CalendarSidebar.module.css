@@ -1,0 +1,173 @@
+.calendarSidebar {
+  background-color: #ffffff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  width: 280px;
+  height: calc(100vh - 64px); /* ヘッダーの高さを引いた高さ */
+  position: fixed;
+  top: 64px; /* ヘッダーの高さ */
+  right: 0;
+  overflow-y: auto;
+  z-index: 100;
+  border-left: 1px solid #e5e7eb;
+}
+
+.calendarTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-align: center;
+  margin-top: 0; /* 上部の余白を削除 */
+  color: #8B7355; /* ベージュ系の色 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.calendarIcon {
+  color: #D2B48C; /* ベージュ系の色 */
+  font-size: 1.2rem;
+}
+
+.monthNavigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.navButton {
+  padding: 0.5rem;
+  background-color: #F5F5DC; /* ベージュ色 */
+  border-radius: 50%;
+  border: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #8B7355; /* ベージュ系の色 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.navButton:hover {
+  background-color: #E8E4C9; /* 少し濃いベージュ */
+  transform: scale(1.1);
+}
+
+.currentMonth {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #8B7355; /* ベージュ系の色 */
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.weekdayHeader {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 4px 0;
+  color: #8B7355; /* ベージュ系の色 */
+}
+
+.emptyDay {
+  height: 36px;
+}
+
+.calendarDay {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 0.875rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  color: #8B7355; /* ベージュ系の色 */
+}
+
+.calendarDay:hover {
+  background-color: #F5F5DC; /* ベージュ色 */
+  transform: scale(1.05);
+}
+
+.today {
+  background-color: #F5F5DC; /* ベージュ色 */
+  font-weight: 600;
+}
+
+.today:hover {
+  background-color: #E8E4C9; /* 少し濃いベージュ */
+}
+
+.otherMonth {
+  color: #BDB76B; /* 薄いベージュ */
+}
+
+.todoIndicator {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #8B7355; /* ベージュ系の色 */
+  line-height: 1;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  padding: 0 2px;
+}
+
+/* 土曜日と日曜日のスタイル */
+.saturday {
+  color: #A0522D; /* 茶色 */
+}
+
+.sunday {
+  color: #CD853F; /* 薄い茶色 */
+}
+
+/* 他の月の土曜日と日曜日 */
+.otherMonth.saturday {
+  color: #D2B48C; /* 薄い茶色 */
+}
+
+.otherMonth.sunday {
+  color: #DEB887; /* 薄い茶色 */
+}
+
+/* 選択された日付のスタイル */
+.selected {
+  background-color: #D2B48C; /* ベージュ系の色 */
+  color: white !important;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(210, 180, 140, 0.5);
+}
+
+.selected:hover {
+  background-color: #BDB76B; /* 少し濃いベージュ */
+}
+
+.selected .todoIndicator {
+  color: #8B7355;
+  background-color: white;
+}
+
+/* 選択された日付の情報表示エリア */
+.selectedDateInfo {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #F5F5DC; /* ベージュ色 */
+  border-radius: 6px;
+  font-size: 0.875rem;
+  border-left: 3px solid #D2B48C; /* ベージュ系の色 */
+  color: #8B7355; /* ベージュ系の色 */
+} 

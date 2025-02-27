@@ -3,7 +3,10 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
+// Prismaクライアントをシングルトンとして管理
+const globalForPrisma = global;
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export const authOptions = {
   providers: [
@@ -18,18 +21,23 @@ export const authOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          })
 
-        if (!user || !(await bcrypt.compare(credentials.password, user.password))) {
-          return null
-        }
+          if (!user || !(await bcrypt.compare(credentials.password, user.password))) {
+            return null
+          }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email
+          }
+        } catch (error) {
+          console.error("認証エラー:", error);
+          return null;
         }
       }
     })

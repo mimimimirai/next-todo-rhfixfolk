@@ -16,7 +16,7 @@ code {
 
 /* 共通のコンテナスタイル */
 .container {
-  position: absolute;  
+  position: relative;  
   background-color: white;
   width: 100%;
   display: flex;
@@ -24,6 +24,8 @@ code {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
+  padding-top: 100px;
+  z-index: 1;
 }
 
 /* 共通の入力フィールドスタイル */
@@ -161,4 +163,15 @@ form {
 
 .main-content {
   width: 100%;
+}
+
+/* カレンダーサイドバー用のスタイル */
+.has-calendar-sidebar {
+  padding-right: 280px; /* カレンダーサイドバーの幅と同じ */
+}
+
+@media (max-width: 768px) {
+  .has-calendar-sidebar {
+    padding-right: 0;
+  }
 }
