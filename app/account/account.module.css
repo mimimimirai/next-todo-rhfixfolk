@@ -96,4 +96,70 @@
   padding: 0.8rem;
   background-color: rgba(76, 175, 80, 0.1);
   border-radius: 6px;
+}
+
+/* アバター関連のスタイル */
+.avatarContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border: 3px solid #4CAF50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4CAF50;
+  background-color: #e8f5e9;
+}
+
+.avatarOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar:hover .avatarOverlay {
+  opacity: 1;
+}
+
+.avatarOverlay span {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.fileInput {
+  display: none;
 } 

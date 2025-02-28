@@ -32,6 +32,21 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // ユーザー情報を更新する関数
+  const refreshUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        return session.user;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+      return null;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -48,6 +63,7 @@ export function AuthProvider({ children }) {
       }
     }),
     signOut: () => supabase.auth.signOut(),
+    refreshUser,
   };
 
   return (
