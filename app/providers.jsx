@@ -12,16 +12,30 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // 現在のセッションを取得
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('セッション取得エラー:', error);
+          setUser(null);
+        } else {
+          setUser(session?.user || null);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('セッション取得中にエラーが発生しました:', error);
+        setUser(null);
+        setLoading(false);
+      }
     };
 
     getSession();
 
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
+        console.log('認証状態変更:', _event, session?.user?.id || 'ユーザーなし');
         setUser(session?.user || null);
         setLoading(false);
       }
@@ -35,34 +49,72 @@ export function AuthProvider({ children }) {
   // ユーザー情報を更新する関数
   const refreshUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('ユーザー情報更新エラー:', error);
+        return null;
+      }
+      
       if (session) {
         setUser(session.user);
         return session.user;
       }
       return null;
     } catch (error) {
-      console.error("Error refreshing user:", error);
+      console.error("ユーザー情報更新中にエラーが発生しました:", error);
       return null;
+    }
+  };
+
+  const signIn = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('ログインエラー:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailConfirm: false,
+          data: {
+            email_confirmed: true
+          }
+        }
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('アカウント登録エラー:', error);
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+      throw error;
     }
   };
 
   const value = {
     user,
     loading,
-    signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
-    signUp: (email, password) => supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        emailConfirm: false,
-        data: {
-          email_confirmed: true
-        }
-      }
-    }),
-    signOut: () => supabase.auth.signOut(),
+    signIn,
+    signUp,
+    signOut,
     refreshUser,
   };
 

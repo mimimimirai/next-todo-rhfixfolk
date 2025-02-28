@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from '../providers';
-import { supabase } from '../../lib/supabase';
 import styles from "./TodoApp.module.css";
 import { FaTrash, FaPlus, FaCheck, FaRegSquare } from "react-icons/fa";
+import { supabase } from '../../lib/supabase';
 
 export default function TodoApp() {
   const [todos, setTodos] = useState([]);
@@ -15,22 +15,37 @@ export default function TodoApp() {
   useEffect(() => {
     if (user) {
       fetchTodos();
+    } else {
+      setTodos([]);
+      setLoading(false);
     }
   }, [user]);
 
   const fetchTodos = async () => {
     try {
       setLoading(true);
+      
+      if (!user || !user.id) {
+        console.error('ユーザーIDが見つかりません');
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('todos')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       setTodos(data || []);
     } catch (error) {
       console.error('Error fetching todos:', error);
+      setTodos([]);
     } finally {
       setLoading(false);
     }
@@ -41,14 +56,21 @@ export default function TodoApp() {
     if (!newTodo.trim()) return;
 
     try {
-      // ユーザーIDが存在するか確認
       if (!user || !user.id) {
         console.error('ユーザーIDが見つかりません');
         alert('ログイン情報が見つかりません。再度ログインしてください。');
         return;
       }
 
-      const newTodoItem = { title: newTodo, user_id: user.id, completed: false };
+      // is_completedカラムを使用
+      const newTodoItem = { 
+        todo: newTodo, 
+        user_id: user.id,
+        is_completed: false
+      };
+      
+      console.log('新しいTodoを追加:', newTodoItem);
+      
       const { data, error } = await supabase
         .from('todos')
         .insert([newTodoItem])
@@ -61,33 +83,40 @@ export default function TodoApp() {
       
       if (data && data.length > 0) {
         // 新しいタスクを先頭に追加
-        setTodos([...data, ...todos]);
+        setTodos([data[0], ...todos]);
+        setNewTodo('');
       } else {
         // データが返ってこない場合は再取得
         await fetchTodos();
       }
-      setNewTodo('');
     } catch (error) {
       console.error('Error adding todo:', error);
       alert('タスクの追加に失敗しました。もう一度お試しください。');
     }
   };
 
-  const toggleTodo = async (id, completed) => {
+  const toggleTodo = async (id, isCompleted) => {
     try {
+      // is_completedカラムを使用して更新
       const { error } = await supabase
         .from('todos')
-        .update({ completed: !completed })
+        .update({ is_completed: !isCompleted })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      // UIの状態を更新
       setTodos(
         todos.map((todo) =>
-          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+          todo.id === id ? { ...todo, is_completed: !todo.is_completed } : todo
         )
       );
     } catch (error) {
       console.error('Error updating todo:', error);
+      alert('タスクの更新に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -98,16 +127,21 @@ export default function TodoApp() {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       setTodos(todos.filter((todo) => todo.id !== id));
     } catch (error) {
       console.error('Error deleting todo:', error);
+      alert('タスクの削除に失敗しました。もう一度お試しください。');
     }
   };
 
   const filteredTodos = todos.filter((todo) => {
-    if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
+    if (filter === 'active') return !todo.is_completed;
+    if (filter === 'completed') return todo.is_completed;
     return true;
   });
 
@@ -172,10 +206,10 @@ export default function TodoApp() {
               <li key={todo.id} className={styles.todoItem}>
                 <div 
                   className={styles.todoContent}
-                  onClick={() => toggleTodo(todo.id, todo.completed)}
+                  onClick={() => toggleTodo(todo.id, todo.is_completed)}
                 >
                   <span className={styles.checkboxButton}>
-                    {todo.completed ? (
+                    {todo.is_completed ? (
                       <FaCheck style={{ color: '#4CAF50' }} />
                     ) : (
                       <FaRegSquare style={{ color: '#4CAF50' }} />
@@ -183,10 +217,10 @@ export default function TodoApp() {
                   </span>
                   <span
                     className={`${styles.todoText} ${
-                      todo.completed ? styles.completed : ""
+                      todo.is_completed ? styles.completed : ""
                     }`}
                   >
-                    {todo.title}
+                    {todo.todo}
                   </span>
                 </div>
                 <button

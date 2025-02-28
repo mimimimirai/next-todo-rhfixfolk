@@ -1,11 +1,40 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../lib/supabase";
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+
+// サーバーサイドでSupabaseクライアントを初期化する関数
+const getSupabaseServerClient = () => {
+  const cookieStore = cookies();
+  
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+        set: (name, value, options) => {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove: (name, options) => {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+};
 
 // TODOの更新（完了状態の切り替え）
 export async function PATCH(request, { params }) {
   try {
-    // Supabaseセッションを取得
-    const { data: { session } } = await supabase.auth.getSession();
+    // リクエストからAuthorizationヘッダーを取得
+    const authHeader = request.headers.get('Authorization');
+    
+    // サーバーサイドでSupabaseクライアントを初期化
+    const supabaseServer = getSupabaseServerClient();
+    
+    // セッションを取得
+    const { data: { session } } = await supabaseServer.auth.getSession();
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -22,7 +51,7 @@ export async function PATCH(request, { params }) {
     }
     
     // TODOの存在確認と権限チェック
-    const { data: todo, error: fetchError } = await supabase
+    const { data: todo, error: fetchError } = await supabaseServer
       .from('todos')
       .select('*')
       .eq('id', id)
@@ -38,7 +67,7 @@ export async function PATCH(request, { params }) {
     }
     
     // TODOの更新
-    const { data: updatedTodo, error: updateError } = await supabase
+    const { data: updatedTodo, error: updateError } = await supabaseServer
       .from('todos')
       .update({ completed })
       .eq('id', id)
@@ -60,8 +89,14 @@ export async function PATCH(request, { params }) {
 // TODOの削除
 export async function DELETE(request, { params }) {
   try {
-    // Supabaseセッションを取得
-    const { data: { session } } = await supabase.auth.getSession();
+    // リクエストからAuthorizationヘッダーを取得
+    const authHeader = request.headers.get('Authorization');
+    
+    // サーバーサイドでSupabaseクライアントを初期化
+    const supabaseServer = getSupabaseServerClient();
+    
+    // セッションを取得
+    const { data: { session } } = await supabaseServer.auth.getSession();
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -72,7 +107,7 @@ export async function DELETE(request, { params }) {
     const id = params.id;
     
     // TODOの存在確認と権限チェック
-    const { data: todo, error: fetchError } = await supabase
+    const { data: todo, error: fetchError } = await supabaseServer
       .from('todos')
       .select('*')
       .eq('id', id)
@@ -88,7 +123,7 @@ export async function DELETE(request, { params }) {
     }
     
     // TODOの削除
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseServer
       .from('todos')
       .delete()
       .eq('id', id);

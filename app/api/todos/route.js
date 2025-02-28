@@ -1,11 +1,40 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+
+// サーバーサイドでSupabaseクライアントを初期化する関数
+const getSupabaseServerClient = () => {
+  const cookieStore = cookies();
+  
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+        set: (name, value, options) => {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove: (name, options) => {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+};
 
 // TODOリストの取得
-export async function GET() {
+export async function GET(request) {
   try {
-    // Supabaseセッションを取得
-    const { data: { session } } = await supabase.auth.getSession();
+    // リクエストからAuthorizationヘッダーを取得
+    const authHeader = request.headers.get('Authorization');
+    
+    // サーバーサイドでSupabaseクライアントを初期化
+    const supabaseServer = getSupabaseServerClient();
+    
+    // セッションを取得
+    const { data: { session } } = await supabaseServer.auth.getSession();
     
     if (!session?.user?.id) {
       console.log("No valid session found");
@@ -15,7 +44,7 @@ export async function GET() {
     const userId = session.user.id;
 
     // Supabaseからtodosを取得
-    const { data: todos, error } = await supabase
+    const { data: todos, error } = await supabaseServer
       .from('todos')
       .select('*')
       .eq('user_id', userId)
@@ -37,8 +66,14 @@ export async function GET() {
 // TODOの追加
 export async function POST(request) {
   try {
-    // Supabaseセッションを取得
-    const { data: { session } } = await supabase.auth.getSession();
+    // リクエストからAuthorizationヘッダーを取得
+    const authHeader = request.headers.get('Authorization');
+    
+    // サーバーサイドでSupabaseクライアントを初期化
+    const supabaseServer = getSupabaseServerClient();
+    
+    // セッションを取得
+    const { data: { session } } = await supabaseServer.auth.getSession();
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -53,7 +88,7 @@ export async function POST(request) {
     }
     
     // Supabaseにtodoを追加
-    const { data: todo, error } = await supabase
+    const { data: todo, error } = await supabaseServer
       .from('todos')
       .insert([
         { title, user_id: userId, completed: false }
