@@ -1,7 +1,6 @@
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from './providers';
-import CalendarSidebar from './components/CalendarSidebar';
 import Header from './components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -18,10 +17,9 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Header />
           <div className="flex relative pt-28">
-            <main className="flex-1 p-4 has-calendar-sidebar">
+            <main className="flex-1 p-4">
               {children}
             </main>
-            <CalendarSidebar />
           </div>
         </AuthProvider>
       </body>

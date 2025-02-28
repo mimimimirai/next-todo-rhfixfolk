@@ -1,6 +1,6 @@
 # Next.js Todo App
 
-シンプルで使いやすいTodoリスト管理アプリケーションです。Next.js、NextAuth.js、Prismaを使用して構築されています。
+シンプルで使いやすいTodoリスト管理アプリケーションです。Next.jsとSupabaseを使用して構築されています。
 
 ## 機能
 
@@ -11,7 +11,7 @@
 
 - **アカウント管理**
   - ユーザー情報の表示
-  - ユーザー情報の更新（名前、メールアドレス）
+  - ユーザー情報の更新（メールアドレス）
 
 - **Todo管理**
   - Todoの追加
@@ -23,18 +23,18 @@
 
 - `app/` - アプリケーションのメインコード
   - `(auth)/` - 認証関連のページ
-  - `account/` - アカウント管理機能
-  - `components/` - 再利用可能なコンポーネント
   - `api/` - APIエンドポイント
+    - `todos/` - Todo管理API
+  - `components/` - 再利用可能なコンポーネント
+  - `providers.jsx` - 認証プロバイダー
 - `lib/` - ユーティリティと共通機能
-- `prisma/` - データベーススキーマ
+  - `supabase.js` - Supabaseクライアント設定
 
 ## 技術スタック
 
-- Next.js 14
+- Next.js 15
 - React
-- Prisma (ORM)
-- NextAuth.js (認証)
+- Supabase (認証・データベース)
 - CSS Modules (スタイリング)
 
 next-todo-rhfixfolk/
@@ -46,17 +46,15 @@ next-todo-rhfixfolk/
 │   │   └── signup/
 │   │       └── page.jsx
 │   │
-│   ├── account/
-│   │   ├── account.module.css
-│   │   ├── actions.js
-│   │   └── page.jsx
-│   │
 │   ├── api/
-│   │   └── auth/
-│   │       └── [...nextauth]/
+│   │   └── todos/
+│   │       ├── route.js
+│   │       └── [id]/
 │   │           └── route.js
 │   │
 │   ├── components/
+│   │   ├── CalendarSidebar.jsx
+│   │   ├── CalendarSidebar.module.css
 │   │   ├── Header.jsx
 │   │   ├── Header.module.css
 │   │   ├── TodoApp.jsx
@@ -64,10 +62,11 @@ next-todo-rhfixfolk/
 │   │
 │   ├── globals.css
 │   ├── layout.jsx
-│   └── page.jsx
+│   ├── page.jsx
+│   └── providers.jsx
 │
-├── prisma/
-│   └── schema.prisma
+├── lib/
+│   └── supabase.js
 │
 ├── .env
 ├── package.json

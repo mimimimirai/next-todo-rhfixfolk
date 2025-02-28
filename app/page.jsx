@@ -1,31 +1,37 @@
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
-import TodoApp from "./components/TodoApp";
-import { PrismaClient } from "@prisma/client";
-import { authOptions } from "@/lib/auth";
+'use client';
 
-const prisma = new PrismaClient();
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import TodoApp from './components/TodoApp';
+import CalendarSidebar from './components/CalendarSidebar';
+import { useAuth } from './providers';
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
+export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   
-  if (!session) {
-    redirect("/signin");
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/signin');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div>読み込み中...</div>;
   }
 
-  // ユーザーのTodosを取得
-  const todos = await prisma.todo.findMany({
-    where: {
-      userId: session.user.id
-    },
-    orderBy: {
-      id: 'desc'
-    }
-  });
+  if (!user) {
+    return null; // useEffectでリダイレクトするため
+  }
 
   return (
-    <main>
-      <TodoApp initialTodos={todos} userId={session.user.id} />
+    <main style={{ display: 'flex', gap: '20px' }}>
+      <div style={{ flex: '1' }}>
+        <TodoApp />
+      </div>
+      <div style={{ width: '300px' }}>
+        <CalendarSidebar />
+      </div>
     </main>
   );
 }

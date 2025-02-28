@@ -47,6 +47,37 @@
   font-size: 1rem;
 }
 
+.passwordInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInput {
+  width: 100%;
+  padding-right: 40px; /* 目のアイコンのスペースを確保 */
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.passwordToggle:hover {
+  color: #777; /* ホバー時は少し濃い色に */
+  background: none; /* 背景色を明示的に無効化 */
+}
+
 .authButton {
   background-color: #4CAF50;
   color: white;

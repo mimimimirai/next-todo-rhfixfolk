@@ -1,33 +1,30 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
-import { PrismaClient } from "@prisma/client";
-
-// Prismaクライアントをグローバルに保持（開発環境での重複インスタンス作成を防ぐ）
-const globalForPrisma = global;
-const prisma = globalForPrisma.prisma || new PrismaClient();
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+import { supabase } from "../../../lib/supabase";
 
 // TODOリストの取得
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    // Supabaseセッションを取得
+    const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user?.id) {
       console.log("No valid session found");
       return NextResponse.json([], { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
-    if (isNaN(userId)) {
-      console.log("Invalid user ID type:", session.user.id);
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
-    }
+    const userId = session.user.id;
 
-    const todos = await prisma.todo.findMany({
-      where: { userId },
-      orderBy: { id: 'desc' }
-    });
+    // Supabaseからtodosを取得
+    const { data: todos, error } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    }
 
     return NextResponse.json(todos);
 
@@ -40,38 +37,37 @@ export async function GET() {
 // TODOの追加
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    // Supabaseセッションを取得
+    const { data: { session } } = await supabase.auth.getSession();
+    
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
-    if (isNaN(userId)) {
-      return NextResponse.json({ error: "無効なユーザーID" }, { status: 400 });
+    const userId = session.user.id;
+    
+    const { title } = await request.json();
+    
+    if (!title || typeof title !== 'string' || title.trim() === '') {
+      return NextResponse.json({ error: "タイトルは必須です" }, { status: 400 });
     }
     
-    // ユーザーの存在確認
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    // Supabaseにtodoを追加
+    const { data: todo, error } = await supabase
+      .from('todos')
+      .insert([
+        { title, user_id: userId, completed: false }
+      ])
+      .select()
+      .single();
 
-    if (!user) {
-      console.log("ユーザーが見つかりません。ID:", userId);
-      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
+    if (error) {
+      console.error("Todo作成エラー:", error);
+      return NextResponse.json(
+        { error: "Todoの作成に失敗しました", details: error.message }, 
+        { status: 500 }
+      );
     }
-
-    const { text } = await request.json();
-    
-    if (!text || typeof text !== 'string' || text.trim() === '') {
-      return NextResponse.json({ error: "テキストは必須です" }, { status: 400 });
-    }
-    
-    const todo = await prisma.todo.create({
-      data: {
-        text,
-        userId
-      }
-    });
 
     return NextResponse.json(todo);
   } catch (error) {

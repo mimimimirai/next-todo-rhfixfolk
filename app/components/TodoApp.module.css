@@ -7,15 +7,6 @@
   z-index: 1;
 }
 
-.title {
-  color: #4CAF50;
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  padding-top: 1rem;
-  width: 100%;
-}
-
 .form {
   display: flex;
   margin-bottom: 1.5rem;

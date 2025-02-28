@@ -41,18 +41,35 @@ export default function TodoApp() {
     if (!newTodo.trim()) return;
 
     try {
+      // ユーザーIDが存在するか確認
+      if (!user || !user.id) {
+        console.error('ユーザーIDが見つかりません');
+        alert('ログイン情報が見つかりません。再度ログインしてください。');
+        return;
+      }
+
+      const newTodoItem = { title: newTodo, user_id: user.id, completed: false };
       const { data, error } = await supabase
         .from('todos')
-        .insert([
-          { title: newTodo, user_id: user.id, completed: false }
-        ])
+        .insert([newTodoItem])
         .select();
 
-      if (error) throw error;
-      setTodos([...data, ...todos]);
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        // 新しいタスクを先頭に追加
+        setTodos([...data, ...todos]);
+      } else {
+        // データが返ってこない場合は再取得
+        await fetchTodos();
+      }
       setNewTodo('');
     } catch (error) {
       console.error('Error adding todo:', error);
+      alert('タスクの追加に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -104,8 +121,6 @@ export default function TodoApp() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Todoリスト</h1>
-
       <form onSubmit={addTodo} className={styles.form}>
         <input
           type="text"

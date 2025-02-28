@@ -26,6 +26,12 @@ code {
   padding: 1rem;
   padding-top: 100px;
   z-index: 1;
+  transition: margin-left 0.3s ease;
+}
+
+/* サイドバーが開いている時のコンテナスタイル */
+.sidebar-open .container {
+  margin-left: 250px; /* サイドバーの幅と同じ */
 }
 
 /* 共通の入力フィールドスタイル */

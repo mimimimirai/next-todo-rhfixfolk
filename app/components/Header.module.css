@@ -26,8 +26,23 @@
 }
 
 .userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: white;
   font-size: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  margin-left: 1rem;
+}
+
+.userIcon {
+  font-size: 0.9rem;
+}
+
+.userName {
+  font-weight: 500;
 }
 
 .accountButton, .todoButton {

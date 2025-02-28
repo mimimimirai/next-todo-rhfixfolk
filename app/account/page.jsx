@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "../providers";
 import styles from "./account.module.css";
 import { updateAccount } from "./actions";
 
 export default function AccountPage() {
-  const { data: session, update } = useSession();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -14,11 +14,11 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name || "");
-      setEmail(session.user.email || "");
+    if (user) {
+      setName(user.user_metadata?.name || "");
+      setEmail(user.email || "");
     }
-  }, [session]);
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +29,6 @@ export default function AccountPage() {
     try {
       const result = await updateAccount({ name, email });
       if (result.success) {
-        await update({ name, email });
         setName(name);
         setEmail(email);
         setMessage("アカウントを更新しました");
@@ -46,6 +45,16 @@ export default function AccountPage() {
       setIsLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>ログインが必要です</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
